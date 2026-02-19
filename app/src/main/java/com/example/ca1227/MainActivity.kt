@@ -22,7 +22,11 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        database = FirebaseDatabase.getInstance().getReference("students")
+        // 🔥 IMPORTANT: Correct region URL
+        database = FirebaseDatabase
+            .getInstance("https://ca12271-default-rtdb.asia-southeast1.firebasedatabase.app")
+            .reference
+            .child("students")
 
         adapter = StudentAdapter(
             studentList,
@@ -47,9 +51,11 @@ class MainActivity : AppCompatActivity() {
                 for (child in snapshot.children) {
                     val student = child.getValue(Student::class.java)
                     student?.id = child.key
-                    student?.let { studentList.add(it) }
+                    if (student != null) {
+                        studentList.add(student)
+                    }
                 }
-                adapter.updateData(studentList)
+                adapter.updateData(ArrayList(studentList))
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -80,9 +86,11 @@ class MainActivity : AppCompatActivity() {
 
             if (student == null) {
                 val id = database.push().key ?: return@setOnClickListener
-                database.child(id).setValue(Student(id, name, rollNo, marks))
+                val newStudent = Student(id, name, rollNo, marks)
+                database.child(id).setValue(newStudent)
             } else {
-                database.child(student.id!!).setValue(Student(student.id, name, rollNo, marks))
+                val updatedStudent = Student(student.id, name, rollNo, marks)
+                database.child(student.id!!).setValue(updatedStudent)
             }
 
             dialog.dismiss()
